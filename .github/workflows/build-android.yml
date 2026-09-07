@@ -1,0 +1,53 @@
+name: Build Android
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+jobs:
+  build:
+    name: Build for Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library folder
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+            Library-
+
+      - name: Build Android player
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          androidExportType: androidPackage
+          buildName: Monopoly
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: build/Android
+          retention-days: 14
