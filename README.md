@@ -43,7 +43,8 @@ export_presets.cfg         — бесплатный Android export preset
 Сборка автоматизирована в `.github/workflows/build-android.yml` в контейнере
 Godot CI. Никакие GitHub Secrets не нужны.
 
-Готовый APK публикуется как артефакт `android-build`.
+Готовый APK публикуется как артефакт `android-build`. CI экспортирует
+отладочную, подписанную APK, поэтому её можно установить на устройство.
 
 ## Расширение проекта
 
