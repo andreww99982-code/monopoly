@@ -1,7 +1,7 @@
 [application]
-config/name="Монополия"
+config/name="Монополия Прорыв"
 run/main_scene="res://main.tscn"
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
 
 [display]
 window/size/viewport_width=1280
