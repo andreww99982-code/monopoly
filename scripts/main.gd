@@ -4,6 +4,68 @@ const BOARD_SIZE := 24
 const START_BALANCE := 1500
 const PLAYER_COLORS := [Color("#48a9ff"), Color("#ff6b8a"), Color("#ffd166"), Color("#8ce99a")]
 
+# Каждый игровой режим ("мод") задаёт название старта, валюту и полный
+# набор клеток-владений. Названия — не заглушки вида «Улица 1/2», а реальный
+# тематический контент, соответствующий выбранному сеттингу.
+const THEMES := {
+	"classic": {
+		"label": "Классика",
+		"currency": "₽",
+		"start_name": "СТАРТ",
+		"tiles": [
+			"Арбат", "Тверская", "Новый Арбат", "Кутузовский проспект",
+			"Ленинский проспект", "Профсоюзная улица", "Кузнецкий Мост",
+			"Пятницкая улица", "Мясницкая улица", "Остоженка", "Пречистенка",
+			"Никольская улица", "Маросейка", "Покровка", "Столешников переулок",
+			"Патриаршие пруды", "Рублёвское шоссе", "Ленинградский проспект",
+			"Садовое кольцо", "Красная площадь", "Охотный ряд",
+			"Манежная площадь", "Тверская застава"
+		]
+	},
+	"star_wars": {
+		"label": "Звёздные Войны",
+		"currency": "кредитов",
+		"start_name": "ДОК ОТПРАВЛЕНИЯ",
+		"tiles": [
+			"Татуин", "Корусант", "Мустафар", "Эндор", "Хот", "Набу",
+			"Кашиик", "Камино", "Джакку", "Явин-4", "Дагоба", "Беспин",
+			"Скарриф", "Кориллия", "Утапау", "Мандалор", "Джеонозис",
+			"Алдераан", "Фелуция", "Малакор", "Райлот", "Ондерон", "Зиккурат Ситхов"
+		]
+	},
+	"rick_and_morty": {
+		"label": "Рик и Морти",
+		"currency": "шмеклей",
+		"start_name": "ГАРАЖ РИКА",
+		"tiles": [
+			"Цитадель Риков", "Анатомический парк", "Планета Сквонч",
+			"Измерение C-137", "Мир без глаз", "Крякомир", "Блипс-энд-Читс",
+			"Гэзорпазорп", "Измерение Крематория", "Феструвиус",
+			"Плутониевый городок", "Мир Junkyard-планеты", "Измерение Мороженого",
+			"Планета Тельца", "Клуб Флиба", "Измерение Огурчика",
+			"Школа Морти", "Гараж Гуфи Дюка", "Измерение Хэппи",
+			"Межпространственный ТЦ", "Планета Зигеров", "Измерение Пыльцы",
+			"Кинотеатр Багса"
+		]
+	},
+	"anime": {
+		"label": "Аниме-клуб",
+		"currency": "жетонов дружбы",
+		"start_name": "ШКОЛЬНЫЕ ВОРОТА",
+		"tiles": [
+			"Цундэрэ Аканэ", "Кудэрэ Юки", "Класс горничных «Мэйдо»",
+			"Кофейня «Сакура»", "Клуб единоборств", "Отаку-магазин",
+			"Библиотека додзинси", "Кудэрэ Рэй", "Пляжный фестиваль",
+			"Химэ-сэмпай Мисаки", "Гэнки-чан Момо", "Аллея сакуры",
+			"Клуб идолов", "Кондитерская «Данго»", "Онсэн «Лунный свет»",
+			"Цундэрэ Хината", "Кинотеатр аниме", "Летний фестиваль ханаби",
+			"Кудэрэ-программист Аи", "Клуб манги", "Аркада «Нео-Токио»",
+			"Химэ-сэмпай Сора", "Выпускной бал"
+		]
+	}
+}
+
+var current_theme_id := "classic"
 var players: Array[Dictionary] = []
 var tiles: Array[Dictionary] = []
 var current_player := 0
@@ -23,13 +85,33 @@ func _ready() -> void:
 	_build_interface()
 	_refresh_interface()
 
+func _current_theme() -> Dictionary:
+	return THEMES[current_theme_id]
+
+func _format_money(amount: int) -> String:
+	return "%d %s" % [amount, _current_theme().currency]
+
 func _create_board() -> void:
+	tiles.clear()
+	var theme: Dictionary = _current_theme()
+	var names: Array = theme.tiles
 	for index in BOARD_SIZE:
 		if index == 0:
-			tiles.append({"name": "СТАРТ", "price": 0, "rent": 0, "owner": -1})
+			tiles.append({"name": theme.start_name, "price": 0, "rent": 0, "owner": -1})
 		else:
+			var tile_name: String = names[(index - 1) % names.size()]
 			var price := 60 + index * 20
-			tiles.append({"name": "Улица %d" % index, "price": price, "rent": price / 10, "owner": -1})
+			tiles.append({"name": tile_name, "price": price, "rent": price / 10, "owner": -1})
+
+func _set_theme(theme_id: String) -> void:
+	if not THEMES.has(theme_id) or theme_id == current_theme_id:
+		return
+	current_theme_id = theme_id
+	_create_board()
+	for player in players:
+		player.position = 0
+	_add_log("Выбран режим «%s»." % _current_theme().label)
+	_refresh_interface()
 
 func _create_players() -> void:
 	players = [
@@ -82,8 +164,19 @@ func _build_interface() -> void:
 	status_label.add_theme_color_override("font_color", Color("#f8fafc"))
 	side.add_child(status_label)
 
+	var theme_select := OptionButton.new()
+	theme_select.position = Vector2(24, 66)
+	theme_select.size = Vector2(352, 40)
+	for theme_id in THEMES.keys():
+		theme_select.add_item(THEMES[theme_id].label)
+	theme_select.select(THEMES.keys().find(current_theme_id))
+	theme_select.item_selected.connect(func(index: int) -> void:
+		_set_theme(THEMES.keys()[index])
+	)
+	side.add_child(theme_select)
+
 	players_label = Label.new()
-	players_label.position = Vector2(24, 66)
+	players_label.position = Vector2(24, 114)
 	players_label.size = Vector2(350, 115)
 	players_label.add_theme_font_size_override("font_size", 17)
 	players_label.add_theme_color_override("font_color", Color("#c9d6ea"))
@@ -91,7 +184,7 @@ func _build_interface() -> void:
 
 	roll_button = Button.new()
 	roll_button.text = "БРОСИТЬ КУБИКИ  [ПРОБЕЛ]"
-	roll_button.position = Vector2(24, 202)
+	roll_button.position = Vector2(24, 250)
 	roll_button.size = Vector2(352, 52)
 	roll_button.add_theme_font_size_override("font_size", 16)
 	roll_button.pressed.connect(_on_roll_pressed)
@@ -99,7 +192,7 @@ func _build_interface() -> void:
 
 	buy_button = Button.new()
 	buy_button.text = "КУПИТЬ КЛЕТКУ"
-	buy_button.position = Vector2(24, 264)
+	buy_button.position = Vector2(24, 312)
 	buy_button.size = Vector2(170, 44)
 	buy_button.disabled = true
 	buy_button.pressed.connect(_on_buy_pressed)
@@ -107,14 +200,14 @@ func _build_interface() -> void:
 
 	var save_button := Button.new()
 	save_button.text = "СОХРАНИТЬ"
-	save_button.position = Vector2(206, 264)
+	save_button.position = Vector2(206, 312)
 	save_button.size = Vector2(170, 44)
 	save_button.pressed.connect(_save_game)
 	side.add_child(save_button)
 
 	log_label = RichTextLabel.new()
-	log_label.position = Vector2(24, 325)
-	log_label.size = Vector2(352, 205)
+	log_label.position = Vector2(24, 373)
+	log_label.size = Vector2(352, 157)
 	log_label.bbcode_enabled = true
 	log_label.fit_content = false
 	log_label.scroll_active = true
@@ -155,7 +248,7 @@ func _resolve_tile(player: Dictionary) -> void:
 	var amount: int = mini(tile.rent, player.balance)
 	player.balance -= amount
 	owner.balance += amount
-	_add_log("%s заплатил аренду %d игроку %s." % [player.name, amount, owner.name])
+	_add_log("%s заплатил аренду %s игроку %s." % [player.name, _format_money(amount), owner.name])
 	if player.balance <= 0:
 		player.bankrupt = true
 		for owned_index in player.properties:
@@ -174,7 +267,7 @@ func _purchase(player: Dictionary) -> void:
 		player.balance -= tile.price
 		tile.owner = players.find(player)
 		player.properties.append(player.position)
-		_add_log("%s купил «%s» за %d." % [player.name, tile.name, tile.price])
+		_add_log("%s купил «%s» за %s." % [player.name, tile.name, _format_money(tile.price)])
 
 func _advance_turn() -> void:
 	var attempts := 0
@@ -198,7 +291,7 @@ func _refresh_interface() -> void:
 	for index in players.size():
 		var item: Dictionary = players[index]
 		var marker := "  ➜ " if index == current_player else "    "
-		lines += "%s%s: $%d  •  клетка %d%s\n" % [marker, item.name, item.balance, item.position, "  БАНКРОТ" if item.bankrupt else ""]
+		lines += "%s%s: %s  •  клетка %d%s\n" % [marker, item.name, _format_money(item.balance), item.position, "  БАНКРОТ" if item.bankrupt else ""]
 	players_label.text = lines
 	var human: Dictionary = players[0]
 	var current_tile: Dictionary = tiles[human.position]
