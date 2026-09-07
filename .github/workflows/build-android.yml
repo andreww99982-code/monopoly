@@ -21,16 +21,25 @@ jobs:
       image: barichello/godot-ci:4.3
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Install export templates
+        run: |
+          mkdir -p "$HOME/.local/share/godot"
+          cp -r /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
+          mkdir -p "$HOME/.config/godot"
+          cp /root/.config/godot/editor_settings-4.3.tres "$HOME/.config/godot/"
 
       - name: Validate Godot project
         run: godot --headless --path . --quit
 
       - name: Export Android package
-        run: godot --headless --path . --export-release "Android" build/Monopoly.apk
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-release "Android" build/Monopoly.apk
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-build
           path: build/Monopoly.apk
