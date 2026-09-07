@@ -10,47 +10,28 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build for Android
+    name: Build Godot Android project
     runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3.1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
-      - name: Cache Library folder
-        uses: actions/cache@v4
-        with:
-          path: Library
-          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
-          restore-keys: |
-            Library-Android-
-            Library-
+      - name: Validate Godot project
+        run: godot --headless --path . --editor --quit
 
-      - name: Build Android player
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          targetPlatform: Android
-          androidExportType: androidPackage
-          buildName: Monopoly
+      - name: Export Android package
+        run: godot --headless --path . --export-release "Android" build/Monopoly.apk
 
-      - name: Upload build artifact
+      - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-build
-          path: build/Android
+          path: build/Monopoly.apk
           retention-days: 14
