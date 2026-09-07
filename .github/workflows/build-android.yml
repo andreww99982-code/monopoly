@@ -36,7 +36,7 @@ jobs:
       - name: Export Android package
         run: |
           mkdir -p build
-          godot --headless --path . --export-release "Android" build/Monopoly.apk
+          godot --headless --path . --export-debug "Android" build/Monopoly.apk
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v6

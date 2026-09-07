@@ -1,6 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="24" fill="#182945"/>
-  <circle cx="64" cy="64" r="40" fill="#0d1728"/>
-  <circle cx="64" cy="64" r="28" fill="#48a9ff"/>
-  <text x="64" y="76" font-family="sans-serif" font-size="36" font-weight="bold" fill="#ffffff" text-anchor="middle">M</text>
+  <rect width="128" height="128" rx="24" fill="#163b2b"/>
+  <rect x="17" y="17" width="94" height="94" rx="10" fill="#f7f0d5"/>
+  <rect x="23" y="23" width="82" height="82" rx="5" fill="#dcecc9" stroke="#24543b" stroke-width="5"/>
+  <rect x="30" y="30" width="16" height="16" fill="#df4f43"/>
+  <rect x="82" y="30" width="16" height="16" fill="#3d82c5"/>
+  <rect x="30" y="82" width="16" height="16" fill="#f2bb42"/>
+  <rect x="82" y="82" width="16" height="16" fill="#9356a5"/>
+  <path d="M48 82V48h9l7 15 7-15h9v34h-8V62l-6 13h-4l-6-13v20z" fill="#24543b"/>
+  <circle cx="64" cy="64" r="4" fill="#f7f0d5"/>
 </svg>
